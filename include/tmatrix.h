@@ -196,53 +196,112 @@ class TDynamicMatrix : private TDynamicVector<TDynamicVector<T>>
 public:
   TDynamicMatrix(size_t s = 1) : TDynamicVector<TDynamicVector<T>>(s)
   {
-    for (size_t i = 0; i < sz; i++)
-      pMem[i] = TDynamicVector<T>(sz);
+      if (sz == 0) throw std::out_of_range("Matrix size should be greater than zero");
+      if (sz > MAX_MATRIX_SIZE) throw std::out_of_range("Matrix size should be lesser than 10.000x10.000");
+      for (size_t i = 0; i < sz; i++) {
+          pMem[i] = TDynamicVector<T>(sz);
+      }
   }
 
   using TDynamicVector<TDynamicVector<T>>::operator[];
+  
+  size_t size() const noexcept { return sz; }
+
+  T& at(size_t row, size_t col)
+  {
+      if (row >= sz || col >= sz) throw std::out_of_range("Invalid index");
+      return pMem[row][col];
+  }
+  const T& at(size_t row, size_t col) const
+  {
+      if (row >= sz || col >= sz) throw std::out_of_range("Invalid index");
+      return pMem[row][col];
+  }
 
   // сравнение
   bool operator==(const TDynamicMatrix& m) const noexcept
   {
-    return false;
+      if (sz != m.sz) return false;
+      for (size_t i = 0; i < sz; ++i) {
+          if (pMem[i] != m.pMem[i]) return false;
+      }
+      return true;
+  }
+
+  bool operator!=(const TDynamicMatrix& m) const noexcept
+  {
+      return !(*this == m);
   }
 
   // матрично-скалярные операции
-  TDynamicMatrix<T> operator*(const T& val)
+  TDynamicMatrix<T> operator*(const T& val) const
   {
-    return TDynamicMatrix<T>{};
+      TDynamicMatrix<T> res(sz);
+      for (size_t i = 0; i < sz; ++i) {
+          res.pMem[i] = pMem[i] * val;
+      }
+      return res;
   }
 
   // матрично-векторные операции
-  TDynamicVector<T> operator*(const TDynamicVector<T>& v)
+  TDynamicVector<T> operator*(const TDynamicVector<T>& v) const
   {
-    return TDynamicVector<T>{};
+      if (sz != v.size()) throw std::invalid_argument("Matrix and vector sizes must match");
+      TDynamicVector<T> res(sz);
+      for (size_t i = 0; i < sz; ++i) {
+          res[i] = pMem[i] * v;
+      }
+      return res;
   }
 
   // матрично-матричные операции
-  TDynamicMatrix operator+(const TDynamicMatrix& m)
+  TDynamicMatrix operator+(const TDynamicMatrix& m) const
   {
-    // можно ли написать реализацию, используя operator+ вектора?
-    return TDynamicMatrix<T>{};
+      // можно ли написать реализацию, используя operator+ вектора?
+      if (sz != m.sz) throw std::invalid_argument("Matrices must be equal size");
+      TDynamicMatrix<T> res(sz);
+      for (size_t i = 0; i < sz; ++i) {
+          res.pMem[i] = pMem[i] + m.pMem[i];
+      }
+      return res;
   }
-  TDynamicMatrix operator-(const TDynamicMatrix& m)
+  TDynamicMatrix operator-(const TDynamicMatrix& m) const
   {
-    return TDynamicMatrix<T>{};
+      if (sz != m.sz) throw std::invalid_argument("Matrices must be equal size");
+      TDynamicMatrix<T> res(sz);
+      for (size_t i = 0; i < sz; ++i) {
+          res.pMem[i] = pMem[i] - m.pMem[i];
+      }
+      return res;
   }
-  TDynamicMatrix operator*(const TDynamicMatrix& m)
+  TDynamicMatrix operator*(const TDynamicMatrix& m) const
   {
-    return TDynamicMatrix<T>{};
+      if (sz != m.sz) throw std::invalid_argument("Matrices must be equal size");
+      TDynamicMatrix<T> res(sz);
+      for (size_t i = 0; i < sz; ++i) {
+          for (size_t k = 0; k < sz; ++k) {
+              for (size_t j = 0; j < sz; ++j) {
+                  res.pMem[i][k] += pMem[i][j] * m.pMem[j][k];
+              }
+          }
+      }
+      return res;
   }
 
   // ввод/вывод
-  friend std::istream& operator>>(std::istream& istr, TDynamicMatrix& v)
+  friend std::istream& operator>>(std::istream& istr, TDynamicMatrix& m)
   {
-    return istr;
+      for (size_t i = 0; i < m.sz; ++i) {
+          istr >> m.pMem[i];
+      }
+      return istr;
   }
-  friend std::ostream& operator<<(std::ostream& ostr, const TDynamicMatrix& v)
+  friend std::ostream& operator<<(std::ostream& ostr, const TDynamicMatrix& m)
   {
-    return ostr;
+      for (size_t i = 0; i < m.sz; ++i) {
+          ostr << m.pMem[i] << std::endl;
+      }
+      return ostr;
   }
 };
 
